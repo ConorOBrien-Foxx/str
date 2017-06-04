@@ -55,8 +55,9 @@ $string = '`(?:.+?|``)*`'
 $number = '\d+'
 $extseq = Regexp.escape($ext) + '?.'
 $char   = '\'.'
+$other  = '[\s\S]'
 
-$tokarr = [$number, $string, $char, $extseq].map { |e| /#{e}/ }
+$tokarr = [$number, $string, $char, $extseq, $other].map { |e| /#{e}/ }
 
 def tokenize(program)
     i = 0
@@ -157,9 +158,7 @@ $status = Terminals::EMPTY
 
 $net_mask = 0
 main_loop { |byte|
-    # break 
     $buffer.push byte unless byte == -1
-    # p "buf:",$buffer
     until $buffer.size == 0
         $stack.push $buffer.pop
         execute(program)
