@@ -39,7 +39,7 @@ require_relative "terminals.rb"   # for Terminals module
 $buffer = Stack.new
 $stack = Stack.new
 $chnum = 0
-$domain = "abcdefghijklmnopqrstuvwxyz"
+$domain = "abcdefghijklmnopqrstuvwxyzaABCDEFGHIJKLMNOPQRSTUVWXYZA"
 $status = Terminals::EMPTY
 
 require_relative "definitions.rb" # for $funcs, $ext
