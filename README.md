@@ -16,16 +16,19 @@ or
 
     #S
 
-**Quine**
+**Quines**
 
-    `%r:#p;`:#p;
     `dro;`dro;
     `%rdp;`dp;
-    `:O[:!;]o`:!;
+    `dr[d!;]o`d!;
 
 **Truth machine**
 
-    ::b'0=?u
+    ddb'0=?u
+
+or
+
+    ddbMN?u
 
 Buffer the character, unbuffer it if its 0.
 

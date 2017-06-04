@@ -27,10 +27,12 @@ def main_loop(&on_byte)
             char = getch
             on_byte.call char
         end
+        on_byte.call -1 while $buffer.size > 0
     else
         STDIN.each_byte { |ord|
             on_byte.call ord.chr
         }
+        on_byte.call -1 while $buffer.size > 0
     end
 end
 
@@ -155,8 +157,9 @@ $status = Terminals::EMPTY
 
 $net_mask = 0
 main_loop { |byte|
-    break if byte == -1
-    $buffer.push byte
+    # break 
+    $buffer.push byte unless byte == -1
+    # p "buf:",$buffer
     until $buffer.size == 0
         $stack.push $buffer.pop
         execute(program)
