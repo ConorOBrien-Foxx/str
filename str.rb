@@ -109,7 +109,9 @@ end
 
 def execute(program)
     tokens = program.kind_of?(Array) ? program : tokenize(program)
-    tokens.each { |tok|
+    index = 0
+    while index < tokens.size
+        tok = tokens[index]
         if /^#$number$/ === tok
             $stack.push tok.to_i
         elsif /^#$string$/ === tok
@@ -120,14 +122,19 @@ def execute(program)
             $stack.push tok[1...-1]
         elsif $funcs.has_key? tok
             effect = $funcs[tok]
-            args = effect.raw ? [] : $stack.pop(effect.arity)
+            args = effect.raw ? [index, tokens] : $stack.pop(effect.arity)
             res = effect[*args]
-            $stack.push res unless effect.raw or res == nil
+            if effect.raw
+                index = res[1] if res and res[0] == :update
+            else
+                $stack.push res unless res == nil
+            end
         else
             $stderr.puts "No such command `#{tok}`"
         end
+        index += 1
         break if $status & Terminals::QUIT != 0
-    }
+    end
 end
 
 sections = get_sections(program)
