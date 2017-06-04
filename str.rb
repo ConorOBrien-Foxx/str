@@ -45,6 +45,9 @@ $status = Terminals::EMPTY
 require_relative "definitions.rb" # for $funcs, $ext
 
 program = ARGV[0]
+if program == "-e"
+    program = File.read ARGV[1]
+end
 
 $string = '`(?:.+?|``)*`'
 $number = '\d+'
