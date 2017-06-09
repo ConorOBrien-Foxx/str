@@ -212,7 +212,8 @@ $funcs = {
         }
     }, 1),
     "Q" => Func.raw {
-        exit $stack.size == 0 ? 1 : $stack.pop
+        s = $stack.pop
+        exit 0 if s == nil
     },
     "R" => Func.raw { puts s_repr($stack.pop) },
     "U" => Func.new({
