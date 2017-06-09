@@ -25,6 +25,7 @@ def main_loop(&on_byte)
     if $stdin.tty?
         loop do
             char = getch
+            break if p == nil
             on_byte.call char
         end
         on_byte.call -1 while $buffer.size > 0
