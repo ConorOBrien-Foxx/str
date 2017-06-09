@@ -211,10 +211,6 @@ $funcs = {
             sprintf(s)
         }
     }, 1),
-    "Q" => Func.raw {
-        s = $stack.pop
-        exit 0 if s == nil
-    },
     "R" => Func.raw { puts s_repr($stack.pop) },
     "U" => Func.new({
         [String] => lambda { |s| is_upcase?(s).to_i }
