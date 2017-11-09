@@ -34,15 +34,15 @@ class Func
     # code point-ify -- allows for operations defined over integers to be extended over code points
     def cp_ify(opt = :some)
         if opt == :monad
-            int_case = @type_map[[Fixnum]]
+            int_case = @type_map[[Integer]]
             @type_map[[String]] = lambda { |s| ords(s).map { |c| chr(int_case[c]) }.join }
         elsif opt == :rev_monad
             str_case = @type_map[[String]]
-            @type_map[[Fixnum]] = lambda { |n| str_case[chr(n)] }
+            @type_map[[Integer]] = lambda { |n| str_case[chr(n)] }
         elsif opt == :some or opt == :all
-            int_case = @type_map[[Fixnum, Fixnum]]
-            @type_map[[String, Fixnum]] = lambda { |s, i| ords(s).map { |c| chr(int_case[c, i]) }.join }
-            @type_map[[Fixnum, String]] = lambda { |i, s| ords(s).map { |c| chr(int_case[i, c]) }.join }
+            int_case = @type_map[[Integer, Integer]]
+            @type_map[[String, Integer]] = lambda { |s, i| ords(s).map { |c| chr(int_case[c, i]) }.join }
+            @type_map[[Integer, String]] = lambda { |i, s| ords(s).map { |c| chr(int_case[i, c]) }.join }
             if opt == :all
                 @type_map[[String, String]] = lambda { |a, b|
                     maxl = ords(a.size < b.size ? b : a)
@@ -112,21 +112,21 @@ $funcs = {
         $stack.push b, a
     },
     "!" => Func.new({
-        [Fixnum] => lambda { |n| fact n },
+        [Integer] => lambda { |n| fact n },
         [String] => lambda { |s| execute(s); nil },
     }, 1),
     "$" => Func.raw { $stack.pop },
     # multiply
     "*" => Func.new({
-        [Fixnum, Fixnum] => lambda { |x, y| x * y },
+        [Integer, Integer] => lambda { |x, y| x * y },
     }, 2).cp_ify(:all),
     # subtract
     "-" => Func.new({
-        [Fixnum, Fixnum] => lambda { |x, y| x - y },
+        [Integer, Integer] => lambda { |x, y| x - y },
     }, 2).cp_ify(:all),
     # add
     "+" => Func.new({
-        [Fixnum, Fixnum] => lambda { |x, y| x + y },
+        [Integer, Integer] => lambda { |x, y| x + y },
     }, 2).cp_ify(:all),
     # conditional
     "?" => Func.raw { |ind, tokens|
@@ -146,22 +146,22 @@ $funcs = {
     },
     "<" => Func.new({
         [String, String] => lambda { |x, y| (x < y).to_i },
-        [Fixnum, Fixnum] => lambda { |x, y| (x < y).to_i },
+        [Integer, Integer] => lambda { |x, y| (x < y).to_i },
     }, 2),
     ">" => Func.new({
         [String, String] => lambda { |x, y| (x > y).to_i },
-        [Fixnum, Fixnum] => lambda { |x, y| (x > y).to_i },
+        [Integer, Integer] => lambda { |x, y| (x > y).to_i },
     }, 2),
     # equality
     "=" => Func.new({
-        [Fixnum, Fixnum] => lambda { |x, y| (x == y).to_i },
+        [Integer, Integer] => lambda { |x, y| (x == y).to_i },
         [String, String] => lambda { |x, y| (x == y).to_i },
-        [Fixnum, String] => lambda { |x, y| 0 },
-        [String, Fixnum] => lambda { |x, y| 0 },
+        [Integer, String] => lambda { |x, y| 0 },
+        [String, Integer] => lambda { |x, y| 0 },
     }, 2),
     "_" => Func.new({
         [String] => lambda { |s| s.chars.reverse.join },
-        [Fixnum] => lambda { |n| -n },
+        [Integer] => lambda { |n| -n },
     }, 1),
     # concat
     ":" => Func.new({
@@ -216,21 +216,21 @@ $funcs = {
         [String] => lambda { |s| is_upcase?(s).to_i }
     }, 1).cp_ify(:rev_monad),
     "V" => Func.new({
-        [Fixnum] => lambda { |x| (x - 32) % 95 + 32 },
+        [Integer] => lambda { |x| (x - 32) % 95 + 32 },
     }, 1).cp_ify(:monad),
     "W" => Func.raw { $status |= Terminals::DISPLAY_AT_END },
     "X" => Func.new({
-        [Fixnum] => lambda { |x| x + 1 },
+        [Integer] => lambda { |x| x + 1 },
     }, 1).cp_ify(:monad),
     "Y" => Func.new({
-        [Fixnum] => lambda { |x| x - 1 },
+        [Integer] => lambda { |x| x - 1 },
     }, 1).cp_ify(:monad),
     "Z" => Func.raw { puts $stack.repr },
     # push to buffer
     "b" => Func.raw { $buffer.push $stack.pop },
     # code to char
     "c" => Func.new({
-        [Fixnum] => lambda { |s| chr(s) },
+        [Integer] => lambda { |s| chr(s) },
         [String] => lambda { |s| s },
     }, 1),
     "d" => Func.raw { $stack.push $stack.peek },
@@ -255,13 +255,13 @@ $funcs = {
     "w" => Func.raw { $status |= Terminals::SHOW_AT_END },
     # repeat
     "x" => Func.new({
-        [String, Fixnum] => lambda { |s, n| s * n },
-        [Fixnum, String] => lambda { |n, s| s * n },
-        [Fixnum, Fixnum] => lambda { |n, r| (n.to_s * r).to_i },
+        [String, Integer] => lambda { |s, n| s * n },
+        [Integer, String] => lambda { |n, s| s * n },
+        [Integer, Integer] => lambda { |n, r| (n.to_s * r).to_i },
     }, 2),
     # char -> int
     "y" => Func.new({
-        [Fixnum] => lambda { |i| i },
+        [Integer] => lambda { |i| i },
         [String] => lambda { |s| s.ord },
     }, 1),
     "z" => Func.raw { puts $stack.data.join "\n" },
@@ -274,7 +274,7 @@ $funcs = {
     "#@" => Func.raw { $stack.push (32..126).to_a.map(&:chr).join },
     # divmod
     "#/" => Func.new({
-        [Fixnum, Fixnum] => lambda { |a, b|
+        [Integer, Integer] => lambda { |a, b|
             $stack.push a / b
             a % b
         },
@@ -339,13 +339,13 @@ $funcs = {
         }
     }, 1),
     "#p" => Func.new({
-        [Fixnum, Fixnum, String] => lambda { |x, y, c| 
+        [Integer, Integer, String] => lambda { |x, y, c| 
             print "\x1b[#{x + 1};#{y + 1}f#{c}"
         },
     }, 3),
     "#q" => Func.new({
         [String] => lambda { |s| s.chars.uniq.join },
-        [Fixnum] => lambda { |s| x.to_s.chars.uniq.join.to_i },
+        [Integer] => lambda { |s| x.to_s.chars.uniq.join.to_i },
     }, 1),
     # reduce stack over function
     "#r" => Func.new({

@@ -21,8 +21,8 @@ class Matcher
     attr_accessor :entries
 end
 
-match = [Fixnum] % 12  |
-        [String] % 34  |
-        [Array]  % 235
+match = [Integer] % 12  |
+        [String]  % 34  |
+        [Array]   % 235
 
 p match
