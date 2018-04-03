@@ -287,7 +287,9 @@ $funcs = {
     "#L" => Func.raw { $stack.push $stdin.read },
     # swapcase
     "#S" => Func.new({
-        [String] => lambda {}
+        [String] => lambda { |s|
+            s == s.upcase ? s.downcase : s.upcase
+        }
     }, 1),
     # domain previous
     "#T" => Func.new({
