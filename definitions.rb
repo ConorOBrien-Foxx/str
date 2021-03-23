@@ -353,6 +353,23 @@ $funcs = {
     }, 1),
     # read all of stdin
     "#L" => Func.raw { $stack.push $stdin.read },
+    # string range, or integer stack range
+    "#R" => Func.new({
+        [String, String] => lambda { |s, r|
+            reverse = s >= r
+            s, r = r, s if reverse
+            res = [*s..r].join
+            res.reverse! if reverse
+            res
+        },
+        [Integer, Integer] => lambda { |a, b|
+            iter = a < b ? a.upto(b) : a.downto(b)
+            iter.each { |i|
+                $stack.push i
+            }
+            nil
+        }
+    }, 2),
     # swapcase
     "#S" => Func.new({
         [String] => lambda { |s|
