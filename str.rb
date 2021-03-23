@@ -45,6 +45,7 @@ require_relative "terminals.rb"   # for Terminals module
 
 $buffer = Stack.new
 $stack = Stack.new
+$memory = {}
 $chnum = 0
 $domain = "abcdefghijklmnopqrstuvwxyzaABCDEFGHIJKLMNOPQRSTUVWXYZA"
 $status = Terminals::EMPTY
@@ -58,11 +59,12 @@ end
 
 $string = '`(?:.+?|``)*`'
 $number = '\d+'
+$defcommand = '&([.:!])?(\w+)'
 $extseq = Regexp.escape($ext) + '?.'
 $char   = '\'.'
 $other  = '[\s\S]'
 
-$tokarr = [$number, $string, $char, $extseq, $other].map { |e| /#{e}/ }
+$tokarr = [$number, $string, $defcommand, $char, $extseq, $other].map { |e| /#{e}/ }
 
 def tokenize(program)
     i = 0
@@ -126,6 +128,22 @@ def execute(program)
             $stack.push tok[1...-1].gsub(/``/, "`")
         elsif /^#$char$/ === tok
             $stack.push tok[1]
+        elsif /^#$defcommand/ === tok
+            # store operation
+            op, name = $1, $2
+            case op
+            when ":"
+                fn = $stack.pop
+                $memory[name] = fn
+            when "."
+                $stack.push $memory[name]
+            when "!", nil
+                $stack.push $memory[name]
+                execute "!"
+            else
+                STDERR.puts "Unknown signal character #{op} in #{tok}."
+            end
+                
         elsif tok[0] == '['
             $stack.push tok[1...-1]
         elsif $funcs.has_key? tok
