@@ -460,6 +460,16 @@ $funcs = {
     "#u" => Func.raw { $stack.push $buffer.shift },
     # debug buffer simple
     "#z" => Func.raw { puts $buffer.data.join "\n" },
+    # less-than or equal to
+    "#<" => Func.new({
+        [String, String] => lambda { |x, y| (x <= y).to_i },
+        [Integer, Integer] => lambda { |x, y| (x <= y).to_i },
+    }, 2),
+    # greater-than or equal to
+    "#>" => Func.new({
+        [String, String] => lambda { |x, y| (x >= y).to_i },
+        [Integer, Integer] => lambda { |x, y| (x >= y).to_i },
+    }, 2),
 }
 
 $ext = "#"
