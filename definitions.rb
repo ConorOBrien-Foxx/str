@@ -107,18 +107,29 @@ $funcs = {
     "\n" => Func.raw {},    # no op
     " " => Func.raw {},     # no op
     "." => Func.raw {},     # no op
+    # swap top two
     "~" => Func.raw {
         a, b = $stack.pop(2)
         $stack.push b, a
     },
+    # factorial, or eval
     "!" => Func.new({
         [Integer] => lambda { |n| fact n },
         [String] => lambda { |s| execute(s); nil },
     }, 1),
+    # drop top
     "$" => Func.raw { $stack.pop },
     # multiply
     "*" => Func.new({
         [Integer, Integer] => lambda { |x, y| x * y },
+    }, 2).cp_ify(:all),
+    # exponentiation
+    "^" => Func.new({
+        [Integer, Integer] => lambda { |x, y| x ** y },
+    }, 2).cp_ify(:all),
+    # division
+    "/" => Func.new({
+        [Integer, Integer] => lambda { |x, y| x / y },
     }, 2).cp_ify(:all),
     # subtract
     "-" => Func.new({
@@ -128,7 +139,7 @@ $funcs = {
     "+" => Func.new({
         [Integer, Integer] => lambda { |x, y| x + y },
     }, 2).cp_ify(:all),
-    # conditional
+    # conditional condition?if,else.
     "?" => Func.raw { |ind, tokens|
         if falsey $stack.pop
             # p ind
@@ -138,16 +149,19 @@ $funcs = {
         end
         [:update, ind]
     },
+    # delim for conditional
     "," => Func.raw { |ind, tokens|
         while ind < tokens.size and tokens[ind] != "."
             ind += 1
         end
         [:update, ind]
     },
+    # less-than
     "<" => Func.new({
         [String, String] => lambda { |x, y| (x < y).to_i },
         [Integer, Integer] => lambda { |x, y| (x < y).to_i },
     }, 2),
+    # greater-than
     ">" => Func.new({
         [String, String] => lambda { |x, y| (x > y).to_i },
         [Integer, Integer] => lambda { |x, y| (x > y).to_i },
@@ -159,23 +173,27 @@ $funcs = {
         [Integer, String] => lambda { |x, y| 0 },
         [String, Integer] => lambda { |x, y| 0 },
     }, 2),
+    # reverse, or negation
     "_" => Func.new({
         [String] => lambda { |s| s.chars.reverse.join },
         [Integer] => lambda { |n| -n },
     }, 1),
-    # concat
+    # concat, or digit concat
     ":" => Func.new({
         [String, String] => lambda { |x, y| x + y },
+        [Integer, Integer] => lambda { |x, y| (x.to_s + y.to_s).to_i }
     }, 2),
     ";" => Func.raw {},     # no op
+    # constants A-F = 10-15
     "A" => Func.constant(10),
     "B" => Func.constant(11),
     "C" => Func.constant(12),
     "D" => Func.constant(13),
     "E" => Func.constant(14),
     "F" => Func.constant(15),
+    # read N characters from STDIN
     "G" => Func.raw { $stack.push $stdin.read($stack.pop) || "" },
-    # pick
+    # pick from stack
     "H" => Func.raw {
         $stack.push $stack[-$stack.pop]
     },
@@ -199,32 +217,47 @@ $funcs = {
         $stack.push *q[1..-1]
         $stack.push q[0]
     },
+    # slice (2-arg)
+    "K" => Func.new({
+        [String, Integer, Integer] => lambda { |s, b, e|
+            s[b..e]
+        }
+    }, 3),
     "L" => Func.new({
         [String] => lambda { |s| is_downcase?(s).to_i }
     }, 1).cp_ify(:rev_monad),
     "M" => Func.raw { $stack.push $stack.pop.to_i },
-    # negation
+    # logical negation
     "N" => Func.raw { $stack.push falsey($stack.pop).to_i },
+    # output top with trailing newline
     "O" => Func.raw { puts $stack.pop },
+    # sprintf, popping members from top of stack, and push result to stack
     "P" => Func.new({
         [String] => lambda { |s|
             sprintf(s)
         }
     }, 1),
+    # str representation
     "R" => Func.raw { puts s_repr($stack.pop) },
+    # is uppercase?
     "U" => Func.new({
         [String] => lambda { |s| is_upcase?(s).to_i }
     }, 1).cp_ify(:rev_monad),
+    # lock to ascii domain
     "V" => Func.new({
         [Integer] => lambda { |x| (x - 32) % 95 + 32 },
     }, 1).cp_ify(:monad),
+    # displays stack at end
     "W" => Func.raw { $status |= Terminals::DISPLAY_AT_END },
+    # increment
     "X" => Func.new({
         [Integer] => lambda { |x| x + 1 },
     }, 1).cp_ify(:monad),
+    # decrement
     "Y" => Func.new({
         [Integer] => lambda { |x| x - 1 },
     }, 1).cp_ify(:monad),
+    # debug - print stack
     "Z" => Func.raw { puts $stack.repr },
     # push to buffer
     "b" => Func.raw { $buffer.push $stack.pop },
@@ -233,25 +266,42 @@ $funcs = {
         [Integer] => lambda { |s| chr(s) },
         [String] => lambda { |s| s },
     }, 1),
+    # duplicate top of stack
     "d" => Func.raw { $stack.push $stack.peek },
+    # empty string
     "e" => Func.constant(""),
+    # reading 1 character from stdin
     "g" => Func.raw { $stack.push $stdin.read(1) || "" },
+    # slice 1-arg
+    "k" => Func.new({
+        [String, Integer] => lambda { |s, b|
+            s[b..-1]
+        }
+    }, 2),
+    # read all of stdin
     "l" => Func.raw { $stack.push $stdin.read },
+    # convert to string
     "m" => Func.raw { $stack.push $stack.pop.to_s },
+    # newline
     "n" => Func.constant("\n"),
+    # print without trailing newline
     "o" => Func.raw { print $stack.pop },
-    # printf
+    # printf, pushes nothing to stack
     "p" => Func.new({
         [String] => lambda { |s|
             print sprintf(s)
             nil
         }
     }, 1),
+    # disables automatic printing for the run
     "q" => Func.raw { $status |= Terminals::DISABLE_PRINT },
+    # print repr without trailing newline
     "r" => Func.raw { print s_repr($stack.pop) },
+    # space literal
     "s" => Func.constant(" "),
     # pop from buffer
     "u" => Func.raw { $stack.push $buffer.pop },
+    # displays stack at end as string
     "w" => Func.raw { $status |= Terminals::SHOW_AT_END },
     # repeat
     "x" => Func.new({
@@ -264,6 +314,7 @@ $funcs = {
         [Integer] => lambda { |i| i },
         [String] => lambda { |s| s.ord },
     }, 1),
+    # debug simple
     "z" => Func.raw { puts $stack.data.join "\n" },
     # conditional
     "#?" => Func.raw {
@@ -279,10 +330,20 @@ $funcs = {
             a % b
         },
     }, 2).cp_ify(:all),
+    # push uppercase alphabet
     "#A" => Func.constant(("A".."Z").to_a.join),
+    # move entire stack to buffer
+    "#B" => Func.raw {
+        $buffer.push *$stack.pop($stack.size)
+    },
     "#C" => Func.raw { print "\x1b[2J" },
     # update domain
     "#D" => Func.raw { $domain = $stack.pop },
+    # exit with code
+    "#E" => Func.new({
+        [Integer] => lambda { |i| exit i },
+        [String] => lambda { |msg| STDERR.puts message; exit 1 },
+    }, 1),
     # read all of stdin
     "#L" => Func.raw { $stack.push $stdin.read },
     # swapcase
@@ -316,7 +377,9 @@ $funcs = {
             $domain[ind % $domain.size]
         }
     }, 1),
+    # debug buffer
     "#Z" => Func.raw { puts $buffer.repr },
+    # push lowercase alphabet
     "#a" => Func.constant(("a".."z").to_a.join),
     # unshift to buffer
     "#b" => Func.raw { $buffer.unshift $stack.pop },
@@ -326,6 +389,8 @@ $funcs = {
     }, 1),
     # push domain
     "#d" => Func.raw { $stack.push $domain },
+    # exit program
+    "#e" => Func.raw { exit 0 },
     # read line of input
     "#l" => Func.raw { $stack.push $stdin.gets },
     # map function over stack
@@ -340,11 +405,13 @@ $funcs = {
             nil
         }
     }, 1),
+    # place character at position in console
     "#p" => Func.new({
         [Integer, Integer, String] => lambda { |x, y, c| 
             print "\x1b[#{x + 1};#{y + 1}f#{c}"
         },
     }, 3),
+    # unique
     "#q" => Func.new({
         [String] => lambda { |s| s.chars.uniq.join },
         [Integer] => lambda { |s| x.to_s.chars.uniq.join.to_i },
@@ -357,8 +424,17 @@ $funcs = {
             end
         }
     }, 1),
+    # scan, regexp to stack
+    "#s" => Func.new({
+        [String, String] => lambda { |s, reg|
+            reg = Regexp.new reg
+            $stack.push *s.scan(reg)
+            nil
+        }
+    }, 2),
     # shift from buffer
     "#u" => Func.raw { $stack.push $buffer.shift },
+    # debug buffer simple
     "#z" => Func.raw { puts $buffer.data.join "\n" },
 }
 
