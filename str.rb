@@ -5,6 +5,8 @@
 require 'io/console'
 $ctrlC = "\u0003"
 $ctrlD = "\u0004"
+
+$chars_read = 0
 def getch
     char = STDIN.getch
     exit(1) if char == $ctrlC
@@ -26,11 +28,13 @@ def main_loop(&on_byte)
         loop do
             char = getch
             break if char == nil
+            $chars_read += 1
             on_byte.call char
         end
         on_byte.call -1 while $buffer.size > 0
     else
         STDIN.each_byte { |ord|
+            $chars_read += 1
             on_byte.call ord.chr
         }
         on_byte.call -1 while $buffer.size > 0

@@ -323,6 +323,7 @@ $funcs = {
     },
     # push ASCII
     "#@" => Func.raw { $stack.push (32..126).to_a.map(&:chr).join },
+    "\#$" => Func.raw { $stack.push $chars_read },
     # divmod
     "#/" => Func.new({
         [Integer, Integer] => lambda { |a, b|
