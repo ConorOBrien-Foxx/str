@@ -239,6 +239,11 @@ $funcs = {
     }, 1),
     # str representation
     "R" => Func.raw { puts s_repr($stack.pop) },
+    # size, or digit count
+    "S" => Func.new({
+        [String] => lambda { |s| s.size },
+        [Integer] => lambda { |n| n.abs.to_s.size },
+    }, 1),
     # is uppercase?
     "U" => Func.new({
         [String] => lambda { |s| is_upcase?(s).to_i }
@@ -337,6 +342,7 @@ $funcs = {
     "#B" => Func.raw {
         $buffer.push *$stack.pop($stack.size)
     },
+    # clear screen
     "#C" => Func.raw { print "\x1b[2J" },
     # update domain
     "#D" => Func.raw { $domain = $stack.pop },
