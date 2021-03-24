@@ -21,6 +21,50 @@ def close_fileno(id)
     io.close unless io.closed?
 end
 
+require 'prime'
+$base_10_primes = [2, 5]
+# modified from https://stackoverflow.com/a/41254620/4119004
+def decimal_representation?(n, d)
+    primes = Prime.prime_division(d).map(&:first)
+    # has at least one b10prime and no non-b10primes
+    (primes & $base_10_primes).any? && (primes - $base_10_primes).empty?
+end
+
+$default_precision = 16
+def long_division(n, d, max=nil)
+    str = ""
+    factor = 1
+    has_decimal = false
+    
+    if max.nil?
+        if decimal_representation?(n, d)
+            max = -1
+        else
+            max = $default_precision
+        end
+    end
+    
+    loop {
+        m, n = n.divmod d
+        str += m.to_s
+        if n / factor < d and not has_decimal
+            str += "."
+            has_decimal = true
+        end
+        break if n.zero? or max.zero?
+        n *= 10
+        factor *= 10
+        max -= 1
+    }
+    if str[0] == "."
+        str = "0" + str
+    end
+    if str[-1] == "."
+        str = str[0..-2]
+    end
+    str
+end
+
 class Func
     def initialize(type_map, arity, raw = false)
         @type_map = type_map
@@ -434,6 +478,12 @@ $funcs = {
     "#d" => Func.raw { $stack.push $domain },
     # exit program
     "#e" => Func.raw { exit 0 },
+    # print float as fraction
+    "#f" => Func.new({
+        [Integer, Integer] => lambda { |a, b|
+            print long_division(a, b)
+        },
+    }, 2),
     # read line of input
     "#l" => Func.raw { $stack.push $stdin.gets },
     # map function over stack
@@ -478,6 +528,11 @@ $funcs = {
     }, 2),
     # shift from buffer
     "#u" => Func.raw { $stack.push $buffer.shift },
+    # downcase, or integer sqrt
+    "#v" => Func.new({
+        [String] => lambda { |s| s.downcase },
+        [Integer] => lambda { |n| Integer.sqrt n },
+    }, 1),
     # debug buffer simple
     "#z" => Func.raw { puts $buffer.data.join "\n" },
     # less-than or equal to
@@ -493,6 +548,11 @@ $funcs = {
     # close stream
     "#." => Func.new({
         [Integer] => lambda { |id| close_fileno id }
+    }, 1),
+    # upcase, or square
+    "#^" => Func.new({
+        [String] => lambda { |s| s.upcase },
+        [Integer] => lambda { |n| n**2 },
     }, 1),
 }
 
