@@ -1,1 +1,7 @@
-0#.`Hello World!`O;
+0#.                 [Close STDIN]$
+`Hello World!`      [Push string]$
+O                   [Output with trailing newline]$
+
+[The semicolon denotes that this all occurs in the preamble. The main
+ loop of the program is skipped because we forcibly closed STDIN.]
+;
