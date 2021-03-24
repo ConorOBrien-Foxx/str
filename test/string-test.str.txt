@@ -1,0 +1,14 @@
+0#.                 [Close STDIN for testing]$
+
+`Hello`O
+
+`>>>There is
+a linebreak<<<`O
+
+`This is a grave `` mistake`O
+
+[I can have `s in here just fine!]O
+
+`There are [brackets] in this regular string`O
+
+;

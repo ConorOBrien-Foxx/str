@@ -91,7 +91,7 @@ if program == "-e"
     program = File.read ARGV[1]
 end
 
-$string = '`(?:.+?|``)*`'
+$string = '`(?:[\s\S]+?|``)*`'
 $number = '\d+'
 $defcommand = '&([.:!])?(\w+)'
 $extseq = Regexp.escape($ext) + '?.'
@@ -138,7 +138,14 @@ def tokenize(program)
                     $handle_error["Unmatched string terminator '`'"]
                 end
                 build += program[i]
-                break if program[i] == '`'
+                if program[i] == '`'
+                    if program[i + 1] == '`'
+                        i += 1
+                        build += program[i]
+                    else
+                        break
+                    end
+                end
             end
             # skip over last '`'
             i += 1
