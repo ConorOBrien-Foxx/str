@@ -2,6 +2,29 @@
 # goals:
 #   C or C++ implementation
 
+# Performance analysis, 3/24/2021, on test/hello-world.str
+#   Seconds elapsed for #tokenize: 0.357114
+#       Most expensive token operations:
+#           ` (string) \n (linefeed/whitespace) first few commands
+#   Seconds elapsed for #get_sections: 0.348736
+#   Seconds elapsed for #main: 0.357812
+# Made string parsing its own while loop. Result:
+#   Seconds elapsed for #tokenize: 0.013031
+#   Seconds elapsed for #get_sections: 0.01344
+#   Seconds elapsed for #main: 0.021211
+#   94.07% improvement
+
+def time_fn(label="unlabeled", &fn)
+    time_start = Time.now
+    res = fn[]
+    time_end = Time.now
+    diff = time_end - time_start
+    puts "Seconds elapsed for ##{label}: #{diff}"
+    res
+end
+
+time_fn("main") {
+
 require 'io/console'
 $ctrlC = "\u0003"
 $ctrlD = "\u0004"
@@ -78,7 +101,7 @@ $other  = '\S'
 
 $tokarr = [
     $number,
-    $string,
+    # $string,
     $defcommand,
     $char,
     $whitespace,
@@ -87,11 +110,12 @@ $tokarr = [
 ].map { |e| /#{e}/ }
 
 def tokenize(program)
+    time_fn("tokenize") {
     $command = "tokenize"
     i = 0
     @toks = []
-    # time_start = Time.now
     while i < program.size
+        time_fn("token_" + program[i].inspect) {
         if program[i] == '['
             depth = 1
             build = program[i]
@@ -108,6 +132,19 @@ def tokenize(program)
             # skip over last `]`
             i += 1
             @toks.push build
+        elsif program[i] == '`'
+            build = program[i]
+            loop do
+                i += 1
+                if program[i] == nil
+                    $handle_error["Unmatched string terminator '`'"]
+                end
+                build += program[i]
+                break if program[i] == '`'
+            end
+            # skip over last '`'
+            i += 1
+            @toks.push build
         else
             pr_slice = program[i..-1]
             $tokarr.each { |re|
@@ -120,24 +157,26 @@ def tokenize(program)
                 end
             }
         end
+        }
     end
-    # time_end = Time.now
-    # p time_end - time_start
     @toks
+    }
 end
 
 def get_sections(program)
-    sections = []
-    build = []
-    tokenize(program).each { |tok|
-        build.push tok
-        if tok == ';'
-            sections.push build.clone
-            build = []
-        end
+    time_fn("get_sections") {
+        sections = []
+        build = []
+        tokenize(program).each { |tok|
+            build.push tok
+            if tok == ';'
+                sections.push build.clone
+                build = []
+            end
+        }
+        sections.push build if build.size
+        sections
     }
-    sections.push build if build.size
-    sections
 end
 
 def execute(program)
@@ -225,3 +264,4 @@ puts $stack.repr if $net_mask & Terminals::DISPLAY_AT_END != 0
 puts $stack.join if $net_mask & Terminals::SHOW_AT_END != 0
 
 # p $stack
+}
