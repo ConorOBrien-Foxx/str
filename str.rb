@@ -13,8 +13,18 @@ def getch
     char == $ctrlD ? -1 : char
 end
 
+$command = nil
 $handle_error = Proc.new { |message, fatal = true, exit_code = -1|
     $stderr.puts "Error: #{message}"
+    begin
+        raise
+    rescue Exception => e
+        $stderr.puts e.full_message
+    end
+    if $command
+        $stderr.puts "In command: #$command."
+    end
+    # $command = nil
     exit(exit_code) if fatal
 }
 
@@ -23,22 +33,23 @@ require_relative "stack.rb"
 # main loop function
 
 def main_loop(&on_byte)
-    # is interactive
-    if $stdin.tty?
+    if $stdin.closed?
+        # no interior loop
+    elsif $stdin.tty?
+        # is interactive
         loop do
             char = getch
             break if char == nil
             $chars_read += 1
             on_byte.call char
         end
-        on_byte.call -1 while $buffer.size > 0
     else
         STDIN.each_byte { |ord|
             $chars_read += 1
             on_byte.call ord.chr
         }
-        on_byte.call -1 while $buffer.size > 0
     end
+    on_byte.call -1 while $buffer.size > 0
 end
 
 require_relative "terminals.rb"   # for Terminals module
@@ -67,6 +78,7 @@ $other  = '[\s\S]'
 $tokarr = [$number, $string, $defcommand, $char, $extseq, $other].map { |e| /#{e}/ }
 
 def tokenize(program)
+    $command = "tokenize"
     i = 0
     @toks = []
     while i < program.size
@@ -121,7 +133,7 @@ def execute(program)
     tokens = program.kind_of?(Array) ? program : tokenize(program)
     index = 0
     while index < tokens.size
-        tok = tokens[index]
+        $command = tok = tokens[index]
         if /^#$number$/ === tok
             $stack.push tok.to_i
         elsif /^#$string$/ === tok
@@ -185,6 +197,7 @@ main_loop { |byte|
     until $buffer.size == 0
         $stack.push $buffer.pop
         execute(program)
+        $command = "<Implicit Print>"
         print $stack.pop unless $status & Terminals::DISABLE_PRINT != 0
         $net_mask |= $status
         $status = 0

@@ -14,6 +14,13 @@ def is_downcase?(s)
     s == s.downcase and s != s.upcase
 end
 
+def close_fileno(id)
+    io = ObjectSpace.each_object(IO).find { |io|
+        io.fileno == id
+    }
+    io.close unless io.closed?
+end
+
 class Func
     def initialize(type_map, arity, raw = false)
         @type_map = type_map
@@ -104,6 +111,7 @@ end
 $funcs = {
     # duplicate
     "\t" => Func.raw {},    # no op
+    "\r" => Func.raw {},    # no op
     "\n" => Func.raw {},    # no op
     " " => Func.raw {},     # no op
     "." => Func.raw {},     # no op
@@ -237,6 +245,17 @@ $funcs = {
             sprintf(s)
         }
     }, 1),
+    # reject input according to substring, and terminate current iteration
+    "Q" => Func.raw { |ind, tokens|
+        to_reject = $stack.pop
+        compare = $stack.peek
+        if to_reject[compare]
+            $stack.pop
+            $status |= Terminals::DISABLE_PRINT
+            ind = tokens.size + 1
+        end
+        [:update, ind]
+    },
     # str representation
     "R" => Func.raw { puts s_repr($stack.pop) },
     # size, or digit count
@@ -429,6 +448,7 @@ $funcs = {
             nil
         }
     }, 1),
+    "#n" => Func.constant("\r\n"),
     # place character at position in console
     "#p" => Func.new({
         [Integer, Integer, String] => lambda { |x, y, c| 
@@ -470,6 +490,10 @@ $funcs = {
         [String, String] => lambda { |x, y| (x >= y).to_i },
         [Integer, Integer] => lambda { |x, y| (x >= y).to_i },
     }, 2),
+    # close stream
+    "#." => Func.new({
+        [Integer] => lambda { |id| close_fileno id }
+    }, 1),
 }
 
 $ext = "#"
