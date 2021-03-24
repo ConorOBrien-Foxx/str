@@ -16,11 +16,11 @@ end
 $command = nil
 $handle_error = Proc.new { |message, fatal = true, exit_code = -1|
     $stderr.puts "Error: #{message}"
-    begin
-        raise
-    rescue Exception => e
-        $stderr.puts e.full_message
-    end
+    # begin
+        # raise
+    # rescue Exception => e
+        # $stderr.puts e.full_message
+    # end
     if $command
         $stderr.puts "In command: #$command."
     end
