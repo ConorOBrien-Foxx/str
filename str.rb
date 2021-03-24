@@ -23,7 +23,7 @@ def time_fn(label="unlabeled", &fn)
     res
 end
 
-time_fn("main") {
+# time_fn("main") {
 
 require 'io/console'
 $ctrlC = "\u0003"
@@ -110,12 +110,10 @@ $tokarr = [
 ].map { |e| /#{e}/ }
 
 def tokenize(program)
-    time_fn("tokenize") {
     $command = "tokenize"
     i = 0
     @toks = []
     while i < program.size
-        time_fn("token_" + program[i].inspect) {
         if program[i] == '['
             depth = 1
             build = program[i]
@@ -157,26 +155,22 @@ def tokenize(program)
                 end
             }
         end
-        }
     end
     @toks
-    }
 end
 
 def get_sections(program)
-    time_fn("get_sections") {
-        sections = []
-        build = []
-        tokenize(program).each { |tok|
-            build.push tok
-            if tok == ';'
-                sections.push build.clone
-                build = []
-            end
-        }
-        sections.push build if build.size
-        sections
+    sections = []
+    build = []
+    tokenize(program).each { |tok|
+        build.push tok
+        if tok == ';'
+            sections.push build.clone
+            build = []
+        end
     }
+    sections.push build if build.size
+    sections
 end
 
 def execute(program)
@@ -264,4 +258,4 @@ puts $stack.repr if $net_mask & Terminals::DISPLAY_AT_END != 0
 puts $stack.join if $net_mask & Terminals::SHOW_AT_END != 0
 
 # p $stack
-}
+# }
