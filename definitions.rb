@@ -16,7 +16,7 @@ end
 
 def close_fileno(id)
     io = ObjectSpace.each_object(IO).find { |io|
-        io.fileno == id
+        not io.closed? and io.fileno == id
     }
     io.close unless io.closed?
 end
