@@ -73,14 +73,24 @@ $number = '\d+'
 $defcommand = '&([.:!])?(\w+)'
 $extseq = Regexp.escape($ext) + '?.'
 $char   = '\'.'
-$other  = '[\s\S]'
+$whitespace = '\s+'
+$other  = '\S'
 
-$tokarr = [$number, $string, $defcommand, $char, $extseq, $other].map { |e| /#{e}/ }
+$tokarr = [
+    $number,
+    $string,
+    $defcommand,
+    $char,
+    $whitespace,
+    $extseq,
+    $other,
+].map { |e| /#{e}/ }
 
 def tokenize(program)
     $command = "tokenize"
     i = 0
     @toks = []
+    # time_start = Time.now
     while i < program.size
         if program[i] == '['
             depth = 1
@@ -111,7 +121,8 @@ def tokenize(program)
             }
         end
     end
-    # p @toks
+    # time_end = Time.now
+    # p time_end - time_start
     @toks
 end
 
@@ -155,7 +166,8 @@ def execute(program)
             else
                 STDERR.puts "Unknown signal character #{op} in #{tok}."
             end
-                
+        elsif /^#$whitespace/ === tok
+            # no-op
         elsif tok[0] == '['
             $stack.push tok[1...-1]
         elsif $funcs.has_key? tok
