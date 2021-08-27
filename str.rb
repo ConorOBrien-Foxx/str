@@ -91,19 +91,21 @@ if program == "-e"
     program = File.read ARGV[1]
 end
 
-$string = '`(?:[\s\S]+?|``)*`'
-$number = '\d+'
+$string     = '`(?:[\s\S]+?|``)*`'
+$number     = '\d+'
 $defcommand = '&([.:!])?(\w+)'
-$extseq = Regexp.escape($ext) + '?.'
-$char   = '\'.'
+$extseq     = Regexp.escape($ext) + '?.'
+$char       = '\'.'
+$extchar    = '\\\\..'
 $whitespace = '\s+'
-$other  = '\S'
+$other      = '\S'
 
 $tokarr = [
     $number,
     # $string,
     $defcommand,
     $char,
+    $extchar,
     $whitespace,
     $extseq,
     $other,
@@ -191,6 +193,8 @@ def execute(program)
             $stack.push tok[1...-1].gsub(/``/, "`")
         elsif /^#$char$/ === tok
             $stack.push tok[1]
+        elsif /^#$extchar$/ === tok
+            $stack.push tok[1..2]
         elsif /^#$defcommand/ === tok
             # store operation
             op, name = $1, $2
