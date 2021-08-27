@@ -175,6 +175,10 @@ $funcs = {
     "*" => Func.new({
         [Integer, Integer] => lambda { |x, y| x * y },
     }, 2).cp_ify(:all),
+    # modulus
+    "%" => Func.new({
+        [Integer, Integer] => lambda { |x, y| x % y },
+    }, 2).cp_ify(:all),
     # exponentiation
     "^" => Func.new({
         [Integer, Integer] => lambda { |x, y| x ** y },
@@ -327,6 +331,11 @@ $funcs = {
     }, 1).cp_ify(:monad),
     # debug - print stack
     "Z" => Func.raw { puts $stack.repr },
+    # get at index
+    "a" => Func.new({
+        [String, Integer] => lambda { |s, n| s[n] },
+        [Integer, String] => lambda { |i, n| i.to_s[n] },
+    }, 2),
     # push to buffer
     "b" => Func.raw { $buffer.push $stack.pop },
     # code to char
@@ -338,6 +347,18 @@ $funcs = {
     "d" => Func.raw { $stack.push $stack.peek },
     # empty string
     "e" => Func.constant(""),
+    # update funcs
+    "f" => Func.new({
+        [String, String] => lambda { |body, name|
+            $funcs[name] = Func.raw { execute body; nil }
+            nil
+        },
+        [String, Integer] => lambda { |body, n|
+            name = $domain[n]
+            $funcs[name] = Func.raw { execute body; nil }
+            nil
+        },
+    }, 2),
     # reading 1 character from stdin
     "g" => Func.raw { $stack.push $stdin.read(1) || "" },
     # slice 1-arg
@@ -367,6 +388,16 @@ $funcs = {
     "r" => Func.raw { print s_repr($stack.pop) },
     # space literal
     "s" => Func.constant(" "),
+    # translate
+    # 3-arg translate is the command sequence `:t`
+    "t" => Func.new({
+        [String, String] => lambda { |base, translate|
+            mid = translate.size / 2
+            s = translate[0...mid]
+            t = translate[mid..-1]
+            base.tr s, t
+        },
+    }, 2),
     # pop from buffer
     "u" => Func.raw { $stack.push $buffer.pop },
     # displays stack at end as string
